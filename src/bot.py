@@ -15,7 +15,7 @@ from mcp_client import create_agent
 
 ADAPTIVECARDTEMPLATE = "resources/UserMentionCardTemplate.json"
 
-class TeamsConversationBot(TeamsActivityHandler):
+class TeamsMcpClientAgent(TeamsActivityHandler):
     def __init__(self, app_id: str, app_password: str) -> None:
         self._app_id = app_id
         self._app_password = app_password
