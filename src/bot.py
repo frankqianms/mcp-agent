@@ -11,7 +11,7 @@ from botbuilder.schema import CardAction, HeroCard, Mention, ConversationParamet
 from botbuilder.schema.teams import TeamInfo, TeamsChannelAccount, TaskModuleRequest, TaskModuleResponse, TaskModuleTaskInfo, TaskModuleContinueResponse, TaskModuleMessageResponse
 from botbuilder.schema._connector_client_enums import ActionTypes
 from langchain_core.messages.tool import ToolMessage
-from mcp_client import create_agent
+from mcp_client import create_agent, get_tool_details
 
 ADAPTIVECARDTEMPLATE = "resources/UserMentionCardTemplate.json"
 

@@ -6,6 +6,7 @@ import traceback
 import uuid
 from datetime import datetime
 from http import HTTPStatus
+import os
 
 from aiohttp import web
 from aiohttp.web import Request, Response, json_response
@@ -64,7 +65,11 @@ ADAPTER.on_turn_error = on_error
 APP_ID = SETTINGS.app_id if SETTINGS.app_id else uuid.uuid4()
 
 # Create the Bot
-BOT = TeamsMcpClientAgent(CONFIG.APP_ID, CONFIG.APP_PASSWORD)
+BOT = TeamsMcpClientAgent(
+    CONFIG.APP_ID,
+    CONFIG.APP_PASSWORD,
+    f'{os.getcwd()}/mcp_servers/mcp_servers_list.json'
+)
 
 # Listen for incoming requests on /api/messages.
 async def messages(req: Request) -> Response:
