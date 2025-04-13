@@ -71,57 +71,100 @@ class TeamsMcpClientAgent(TeamsActivityHandler):
                 await turn_context.send_activity(
                     f"Welcome to the team { member.given_name } { member.surname }. "
                 )
-                
+    
     async def on_teams_task_module_fetch(
         self, turn_context: TurnContext, task_module_request: TaskModuleRequest
     ) -> TaskModuleResponse:
         """Handles the Teams task module fetch event"""
         if task_module_request.data.get("data") == "SELECT_TOOLS":
             # Get available tools
-            tools_by_server, available_tools = await self._get_available_tools()
+            tools_by_server, all_tools = await self._get_available_tools()
+            self._tools_by_server, self._all_tools = tools_by_server, all_tools
             
-            # Create an adaptive card for tool selection
+            # Create an adaptive card for hierarchical tool selection
+            card_items = []
+            
+            # Add header
+            card_items.append({
+                "type": "TextBlock",
+                "text": "Select the tools you want to use",
+                "weight": "bolder",
+                "size": "medium",
+                "wrap": True
+            })
+            
+            # Create hierarchical structure
+            for server_name, tools in tools_by_server.items():
+                # Add server header as a collapsible container
+                server_container = {
+                    "type": "Container",
+                    "style": "emphasis",
+                    "items": [
+                        {
+                            "type": "ColumnSet",
+                            "columns": [
+                                {
+                                    "type": "Column",
+                                    "width": "auto",
+                                    "items": [
+                                        {
+                                            "type": "Input.Toggle",
+                                            "id": f"server_{server_name}",
+                                            "title": f'{server_name}',
+                                            "valueOn": "true",
+                                            "valueOff": "false",
+                                            "value": "false"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+                card_items.append(server_container)
+                
+                # Add tools for this server
+                tool_choices = []
+                for tool in tools:
+                    tool_choices.append({
+                        "title": f"{tool['name']} - {tool['description']}",
+                        "value": tool['full_name']
+                    })
+                
+                # Add a choice set for tools within this server
+                tool_choice_set = {
+                    "type": "Input.ChoiceSet",
+                    "id": f"tools_{server_name}",
+                    "isMultiSelect": True,
+                    "choices": tool_choices,
+                    "style": "expanded",
+                    "wrap": True
+                }
+                card_items.append(tool_choice_set)
+            
+            # Create an adaptive card with the hierarchical structure
             adaptive_card = {
                 "type": "AdaptiveCard",
-                "body": [
-                    {
-                        "type": "TextBlock",
-                        "text": "Select the tools you want to use",
-                        "weight": "bolder",
-                        "size": "medium"
-                    },
-                    {
-                        "type": "Input.ChoiceSet",
-                        "id": "toolSelection",
-                        "isMultiSelect": True,
-                        "value": "",
-                        "choices": [
-                            {
-                                "title": tool.name+": "+tool.description,
-                                "value": tool.description
-                            } for tool in available_tools
-                        ]
-                    }
-                ],
+                "body": card_items,
                 "actions": [
                     {
                         "type": "Action.Submit",
-                        "title": "Select",
+                        "title": "Apply",
                         "data": {
                             "submitLocation": "toolSelectionSubmit"
                         }
                     }
                 ],
                 "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-                "version": "1.3"
+                "version": "1.5"
             }
             
             # Create a task module response with the adaptive card
             task_info = TaskModuleTaskInfo(
                 card=CardFactory.adaptive_card(adaptive_card),
                 title="Select Tools",
-                height=500,
-                width=400
+                height=600,
+                width=500
             )
             
             return TaskModuleResponse(task=TaskModuleContinueResponse(value=task_info))
@@ -135,17 +178,37 @@ class TeamsMcpClientAgent(TeamsActivityHandler):
         data = task_module_request.data
         
         if data.get("submitLocation") == "toolSelectionSubmit":
-            selected_tools_str = data.get("toolSelection", "")
+            selected_tools = []
             
-            # Parse the selected tools (comma-separated values if multiple are selected)
-            if selected_tools_str:
-                self._selected_tools = selected_tools_str.split(",")
-            else:
-                self._selected_tools = []
+            # Process the data to extract selected tools
+            for key, value in data.items():
+                # Skip the submitLocation item
+                if key == "submitLocation":
+                    continue
                 
+                # Process server selections - if a server is selected, add all its tools
+                if key.startswith("server_"):
+                    if value == "true":
+                        server_name = key[7:]  # Remove "server_" prefix
+                        if hasattr(self, '_tools_by_server') and server_name in self._tools_by_server:
+                            for tool in self._tools_by_server[server_name]:
+                                selected_tools.append(tool["full_name"])
+                
+                # Process tools selection sets
+                elif key.startswith("tools_"):
+                    if value:  # If there are selected tools
+                        # Value could be a single tool or comma-separated list
+                        tool_values = value.split(",") if "," in value else [value]
+                        for tool_value in tool_values:
+                            if tool_value and tool_value not in selected_tools:
+                                selected_tools.append(tool_value)
+            
+            # Store the selected tools
+            self._selected_tools = selected_tools
+            
             # Initialize the agent with selected tools
             try:
-                self._agent_cm = create_agent(self._selected_tools)
+                self._agent_cm = create_agent(self._selected_tools, mcp_servers_list_path=self._mcp_servers_list_path)
                 self._agent = await self._agent_cm.__aenter__()
                 tool_message = f"Agent initialized with {len(self._selected_tools)} tools: {', '.join(self._selected_tools)}" if self._selected_tools else "Agent initialized with all available tools"
                 return TaskModuleResponse(task=TaskModuleMessageResponse(value=tool_message))
