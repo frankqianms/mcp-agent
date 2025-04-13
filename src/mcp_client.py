@@ -15,8 +15,8 @@ model = AzureChatOpenAI(
 )
 
 @asynccontextmanager
-async def create_agent(selected_tools=None):
-    with open(f'{os.getcwd()}/mcp_servers/mcp_servers_list.json') as file:
+async def create_agent(selected_tools=None, mcp_servers_list_path=None):
+    with open(mcp_servers_list_path) as file:
         mcp_servers_list = json.loads(file.read())
     async with MultiServerMCPClient(mcp_servers_list) as client:
         all_tools = client.get_tools()
@@ -35,8 +35,42 @@ async def create_agent(selected_tools=None):
             print(f"Agent session completed with {len(agent_tools)} tools")
             print(json.dumps([tool.name for tool in agent_tools]))
             
-# Example of how to use this in the same module:
-# async def main():
-#     async with create_agent() as agent:
-#         result = await agent.ainvoke({"messages": "hi"})
-#         print(result)
+# Function to get detailed information about all available tools
+async def get_tool_details(mcp_servers_list_path=None):
+    """
+    Get detailed information about all available tools from MCP servers
+    Returns a dictionary with server names as keys and lists of tool details as values
+    """
+    try:
+        # Use provided path or fall back to default        servers_list_path = mcp_servers_list_path or f'{os.getcwd()}/mcp_servers/mcp_servers_list.json'
+        with open(mcp_servers_list_path) as file:
+            mcp_servers_list = json.loads(file.read())
+        
+        # Create a client to get the tools from each server
+        async with MultiServerMCPClient(mcp_servers_list) as client:
+            all_tools = client.get_tools()
+            print(client.server_name_to_tools)
+            
+            # Directly use server_name_to_tools which already organizes tools by server
+            tools_by_server = {}
+            
+            # Process each server and its tools
+            for server_name, server_tools in client.server_name_to_tools.items():
+                tools_by_server[server_name] = []
+                
+                # Process each tool in this server
+                for tool in server_tools:
+                    # Create the full name with server prefix
+                    full_name = f"{server_name}.{tool.name}"
+                    
+                    tools_by_server[server_name].append({
+                        "name": tool.name,
+                        "full_name": full_name,
+                        "description": tool.description
+                    })
+            
+            return tools_by_server, all_tools
+                
+    except Exception as e:
+        print(f"Error getting available tools: {e}")
+        return {}, []

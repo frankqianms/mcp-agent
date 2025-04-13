@@ -16,12 +16,13 @@ from mcp_client import create_agent, get_tool_details
 ADAPTIVECARDTEMPLATE = "resources/UserMentionCardTemplate.json"
 
 class TeamsMcpClientAgent(TeamsActivityHandler):
-    def __init__(self, app_id: str, app_password: str) -> None:
+    def __init__(self, app_id: str, app_password: str, mcp_servers_list_path) -> None:
         self._app_id = app_id
         self._app_password = app_password
         self._agent = None
         self._agent_cm = None
         self._selected_tools = []
+        self._mcp_servers_list_path = mcp_servers_list_path
         
     async def initialize_agent(self, turn_context: TurnContext = None):
         """Initialize the agent if it hasn't been initialized yet"""
@@ -53,11 +54,8 @@ class TeamsMcpClientAgent(TeamsActivityHandler):
     async def _get_available_tools(self):
         """Get list of available tools from MCP servers list"""
         try:
-            with open(f'{os.getcwd()}/mcp_servers/mcp_servers_list.json') as file:
-                mcp_servers_list = json.loads(file.read())
-                
-            # Return list of server names as available tools
-            return list(mcp_servers_list.keys())
+            tools_by_server, all_tools = await get_tool_details(self._mcp_servers_list_path)
+            return tools_by_server, all_tools
         except Exception as e:
             print(f"Error getting available tools: {e}")
             return []
@@ -80,7 +78,7 @@ class TeamsMcpClientAgent(TeamsActivityHandler):
         """Handles the Teams task module fetch event"""
         if task_module_request.data.get("data") == "SELECT_TOOLS":
             # Get available tools
-            available_tools = await self._get_available_tools()
+            tools_by_server, available_tools = await self._get_available_tools()
             
             # Create an adaptive card for tool selection
             adaptive_card = {
@@ -99,8 +97,8 @@ class TeamsMcpClientAgent(TeamsActivityHandler):
                         "value": "",
                         "choices": [
                             {
-                                "title": tool,
-                                "value": tool
+                                "title": tool.name+": "+tool.description,
+                                "value": tool.description
                             } for tool in available_tools
                         ]
                     }
