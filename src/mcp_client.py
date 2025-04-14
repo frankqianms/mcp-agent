@@ -1,5 +1,6 @@
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.prebuilt import create_react_agent
+# from langchain.agents import create_react_agent
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
 
 from contextlib import asynccontextmanager
@@ -20,6 +21,7 @@ async def create_agent(selected_tools=None, mcp_servers_list_path=None):
         mcp_servers_list = json.loads(file.read())
     async with MultiServerMCPClient(mcp_servers_list) as client:
         all_tools = client.get_tools()
+        selected_tools = [tool.split(".", 1)[1] for tool in selected_tools]
         # If selected_tools is provided, filter tools to only include selected ones
         if selected_tools and isinstance(selected_tools, list) and len(selected_tools) > 0:
             filtered_tools = [tool for tool in all_tools if tool.name in selected_tools]
@@ -33,7 +35,6 @@ async def create_agent(selected_tools=None, mcp_servers_list_path=None):
         finally:
             # Any cleanup code can go here
             print(f"Agent session completed with {len(agent_tools)} tools")
-            print(json.dumps([tool.name for tool in agent_tools]))
             
 # Function to get detailed information about all available tools
 async def get_tool_details(mcp_servers_list_path=None):
@@ -49,7 +50,6 @@ async def get_tool_details(mcp_servers_list_path=None):
         # Create a client to get the tools from each server
         async with MultiServerMCPClient(mcp_servers_list) as client:
             all_tools = client.get_tools()
-            print(client.server_name_to_tools)
             
             # Directly use server_name_to_tools which already organizes tools by server
             tools_by_server = {}

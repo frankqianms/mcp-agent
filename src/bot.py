@@ -12,6 +12,7 @@ from botbuilder.schema.teams import TeamInfo, TeamsChannelAccount, TaskModuleReq
 from botbuilder.schema._connector_client_enums import ActionTypes
 from langchain_core.messages.tool import ToolMessage
 from mcp_client import create_agent, get_tool_details
+from cards.tools_cards import ToolsSelectionCard
 
 ADAPTIVECARDTEMPLATE = "resources/UserMentionCardTemplate.json"
 
@@ -23,6 +24,8 @@ class TeamsMcpClientAgent(TeamsActivityHandler):
         self._agent_cm = None
         self._selected_tools = []
         self._mcp_servers_list_path = mcp_servers_list_path
+        self._tools_by_server = {}
+        self._all_tools = []
         
     async def initialize_agent(self, turn_context: TurnContext = None):
         """Initialize the agent if it hasn't been initialized yet"""
@@ -32,23 +35,14 @@ class TeamsMcpClientAgent(TeamsActivityHandler):
                 await self._send_select_tools_card(turn_context)
             else:
                 # Initialize with all tools if no context is available
-                self._agent_cm = create_agent()
+                self._agent_cm = create_agent(mcp_servers_list_path=self._mcp_servers_list_path)
                 self._agent = await self._agent_cm.__aenter__()
                 print("Agent initialized with all MCP tools")
                 
     async def _send_select_tools_card(self, turn_context: TurnContext):
         """Send a card with a button to select tools"""
-        card = HeroCard(
-            title="Agent Initialization",
-            text="The agent needs to be initialized with tools. Would you like to select specific tools?",
-            buttons=[
-                CardAction(
-                    type="invoke",
-                    title="Select Tools",
-                    value={"type": "task/fetch", "data": "SELECT_TOOLS"}
-                )
-            ]
-        )
+        # Use the ToolsSelectionCard class to create the card
+        card = ToolsSelectionCard.create_tools_selection_card()
         await turn_context.send_activity(MessageFactory.attachment(CardFactory.hero_card(card)))
         
     async def _get_available_tools(self):
@@ -58,122 +52,37 @@ class TeamsMcpClientAgent(TeamsActivityHandler):
             return tools_by_server, all_tools
         except Exception as e:
             print(f"Error getting available tools: {e}")
-            return []
+            return {}, []
 
-    async def on_teams_members_added(  # pylint: disable=unused-argument
-        self,
-        teams_members_added: [TeamsChannelAccount],
-        team_info: TeamInfo,
-        turn_context: TurnContext,
-    ):
+    async def on_teams_members_added(self, teams_members_added: [TeamsChannelAccount], team_info: TeamInfo, turn_context: TurnContext):
         for member in teams_members_added:
             if member.id != turn_context.activity.recipient.id:
-                await turn_context.send_activity(
-                    f"Welcome to the team { member.given_name } { member.surname }. "
-                )
-    
-    async def on_teams_task_module_fetch(
-        self, turn_context: TurnContext, task_module_request: TaskModuleRequest
-    ) -> TaskModuleResponse:
+                await turn_context.send_activity(f"Welcome to the team {member.given_name} {member.surname}.")
+                await self._send_select_tools_card(turn_context)
+                
+    async def on_teams_task_module_fetch(self, turn_context: TurnContext, task_module_request: TaskModuleRequest) -> TaskModuleResponse:
         """Handles the Teams task module fetch event"""
         if task_module_request.data.get("data") == "SELECT_TOOLS":
             # Get available tools
-            tools_by_server, all_tools = await self._get_available_tools()
-            self._tools_by_server, self._all_tools = tools_by_server, all_tools
+            self._tools_by_server, self._all_tools = await self._get_available_tools()
             
-            # Create an adaptive card for hierarchical tool selection
-            card_items = []
+            # Use the ToolsSelectionCard class to create the task module
+            task_module_response = ToolsSelectionCard.create_tools_selection_task_module(self._tools_by_server)
             
-            # Add header
-            card_items.append({
-                "type": "TextBlock",
-                "text": "Select the tools you want to use",
-                "weight": "bolder",
-                "size": "medium",
-                "wrap": True
-            })
-            
-            # Create hierarchical structure
-            for server_name, tools in tools_by_server.items():
-                # Add server header as a collapsible container
-                server_container = {
-                    "type": "Container",
-                    "style": "emphasis",
-                    "items": [
-                        {
-                            "type": "ColumnSet",
-                            "columns": [
-                                {
-                                    "type": "Column",
-                                    "width": "auto",
-                                    "items": [
-                                        {
-                                            "type": "Input.Toggle",
-                                            "id": f"server_{server_name}",
-                                            "title": f'{server_name}',
-                                            "valueOn": "true",
-                                            "valueOff": "false",
-                                            "value": "false"
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
-                    ]
-                }
-                card_items.append(server_container)
-                
-                # Add tools for this server
-                tool_choices = []
-                for tool in tools:
-                    tool_choices.append({
-                        "title": f"{tool['name']} - {tool['description']}",
-                        "value": tool['full_name']
-                    })
-                
-                # Add a choice set for tools within this server
-                tool_choice_set = {
-                    "type": "Input.ChoiceSet",
-                    "id": f"tools_{server_name}",
-                    "isMultiSelect": True,
-                    "choices": tool_choices,
-                    "style": "expanded",
-                    "wrap": True
-                }
-                card_items.append(tool_choice_set)
-            
-            # Create an adaptive card with the hierarchical structure
-            adaptive_card = {
-                "type": "AdaptiveCard",
-                "body": card_items,
-                "actions": [
-                    {
-                        "type": "Action.Submit",
-                        "title": "Apply",
-                        "data": {
-                            "submitLocation": "toolSelectionSubmit"
-                        }
-                    }
-                ],
-                "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-                "version": "1.5"
-            }
-            
-            # Create a task module response with the adaptive card
-            task_info = TaskModuleTaskInfo(
-                card=CardFactory.adaptive_card(adaptive_card),
-                title="Select Tools",
-                height=600,
-                width=500
+            return TaskModuleResponse(task=task_module_response)
+        
+        elif task_module_request.data.get("data") == "SHOW_TOOLS":
+            # Use the ToolsSelectionCard class to create the show tools task module
+            agent_initialized = self._agent is not None
+            task_module_response = ToolsSelectionCard.create_show_tools_task_module(
+                self._selected_tools, agent_initialized
             )
             
-            return TaskModuleResponse(task=TaskModuleContinueResponse(value=task_info))
+            return TaskModuleResponse(task=task_module_response)
         
         return None
     
-    async def on_teams_task_module_submit(
-        self, turn_context: TurnContext, task_module_request: TaskModuleRequest
-    ) -> TaskModuleResponse:
+    async def on_teams_task_module_submit(self, turn_context: TurnContext, task_module_request: TaskModuleRequest) -> TaskModuleResponse:
         """Handles the Teams task module submit event"""
         data = task_module_request.data
         
@@ -190,7 +99,7 @@ class TeamsMcpClientAgent(TeamsActivityHandler):
                 if key.startswith("server_"):
                     if value == "true":
                         server_name = key[7:]  # Remove "server_" prefix
-                        if hasattr(self, '_tools_by_server') and server_name in self._tools_by_server:
+                        if server_name in self._tools_by_server:
                             for tool in self._tools_by_server[server_name]:
                                 selected_tools.append(tool["full_name"])
                 
@@ -213,11 +122,22 @@ class TeamsMcpClientAgent(TeamsActivityHandler):
                 tool_message = f"Agent initialized with {len(self._selected_tools)} tools: {', '.join(self._selected_tools)}" if self._selected_tools else "Agent initialized with all available tools"
                 return TaskModuleResponse(task=TaskModuleMessageResponse(value=tool_message))
             except Exception as e:
-                await turn_context.send_activity(f"Error initializing agent: {str(e)}")
+                error_message = f"Error initializing agent: {str(e)}"
+                print(error_message)
+                await turn_context.send_activity(error_message)
                 # Fall back to all tools
-                self._agent_cm = create_agent()
+                self._agent_cm = create_agent(mcp_servers_list_path=self._mcp_servers_list_path)
                 self._agent = await self._agent_cm.__aenter__()
                 await turn_context.send_activity("Falling back to all available tools")
+        
+        elif data.get("submitLocation") == "closeSelectedTools":
+            # Simply close the task module without any action
+            return TaskModuleResponse(task=None)
+            
+        elif data.get("submitLocation") == "goToSelectTools":
+            # Redirect to the Select Tools task module
+            task_module_response = ToolsSelectionCard.create_tools_selection_task_module(self._tools_by_server)
+            return TaskModuleResponse(task=task_module_response)
         
         return TaskModuleResponse(task=None)
     
@@ -231,7 +151,7 @@ class TeamsMcpClientAgent(TeamsActivityHandler):
         TurnContext.remove_recipient_mention(turn_context.activity)
         text = turn_context.activity.text.strip().lower()
 
-        res = await self._agent.ainvoke({"messages" : text})
+        res = await self._agent.ainvoke({"messages": text})
         tool_calls = []
         for message in res["messages"]:
             if isinstance(message, ToolMessage):
