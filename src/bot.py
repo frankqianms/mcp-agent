@@ -54,7 +54,6 @@ class TeamsMcpClientAgent(TeamsActivityHandler):
             if isinstance(message, ToolMessage):
                 tool_calls.append({
                     "action name": message.name,
-                    "content": message.content
                 })
         response = res["messages"][-1].content
         await turn_context.send_activity(response)

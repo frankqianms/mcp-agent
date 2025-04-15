@@ -1,12 +1,14 @@
 {
     "math": {
         "command": "python",
-        "args": ["Full\\Path\\To\\mcp-agent\\src\\mcp_servers\\math_server.py"],
-        "transport": "stdio"
+        "args": ["C:\\Users\\frankqian\\TeamsApps\\mcp-agent\\src\\mcp_servers\\math_server.py"]
+
     },
     "weather": {
         "command": "python",
-        "args": ["Full\\Path\\To\\mcp-agent\\src\\mcp_servers\\weather_server.py"],
-        "transport": "stdio"
+        "args": ["C:\\Users\\frankqian\\TeamsApps\\mcp-agent\\src\\mcp_servers\\weather_server.py"],
+        "env": {
+            "OPENWEATHER_API_KEY": ""
+        }
     }
 }
