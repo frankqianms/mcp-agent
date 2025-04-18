@@ -1,0 +1,21 @@
+{
+    "math": {
+        "transport": "stdio",
+        "command": "node",
+        "args": ["mcpMathServer.js"]
+    },
+    "weather": {
+        "transport": "stdio",
+        "command": "npx",
+        "args": ["-y", "@h1deya/mcp-server-weather"]
+    },
+    "apic-api": {
+        "command": "npx",
+        "args": ["-y", "azure-api-center-mcp-server@latest"],
+        "env": {
+            "CLIENT_ID": "720625de-5921-49b2-9156-f626e9402c20",
+            "TENANT_ID": "1e440324-bdf3-4f3c-adc0-aa9a44e32e86",
+            "RUNTIME_URL": "apic-api-mcp-franktest.data.eastus.azure-apicenter.ms"
+        }
+    }
+}

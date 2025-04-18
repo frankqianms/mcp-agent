@@ -14,7 +14,7 @@
         "outline": "outline.png"
     },
     "name": {
-        "short": "mcp-agent${{APP_NAME_SUFFIX}}",
+        "short": "mcp-agent-${{APP_NAME_SUFFIX}}",
         "full": "full name for mcp-agent"
     },
     "description": {
@@ -49,12 +49,12 @@
                     ],
                     "commands": [
                         {
-                            "title": "Create task:remind drink tonight",
-                            "description": "Create a task for me to remind me drink water tonight"
+                            "title": "How can you help me?",
+                            "description": "How can you help me?"
                         },
                         {
-                            "title": "Delete all my current tasks",
-                            "description": "Delete all my current tasks"
+                            "title": "How to develop TeamsToolkit app?",
+                            "description": "How can I develop apps with Teams Toolkit?"
                         }
                     ]
                 }
