@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "target": "es2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "./lib",
+    "rootDir": "./",
+    "sourceMap": true,
+    "incremental": true,
+    "tsBuildInfoFile": "./lib/.tsbuildinfo",
+    "esModuleInterop": true
+  }
+}
