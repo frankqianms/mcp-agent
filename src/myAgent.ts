@@ -5,11 +5,6 @@ import { sysMessage, initializeMcpAgent } from './utils/index.js'
 
 export const mcpAgent = new ApplicationBuilder().build()
 
-// Welcome message when bot is added to conversation
-mcpAgent.conversationUpdate('membersAdded', async (context, state) => {
-  await context.sendActivity(`Hello and Welcome! I'm here to help with all your problems!`)
-})
-
 // Initialize agent
 let mcpClient;
 let reactAgent;
