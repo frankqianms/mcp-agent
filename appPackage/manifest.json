@@ -49,12 +49,16 @@
                     ],
                     "commands": [
                         {
-                            "title": "How can you help me?",
-                            "description": "How can you help me?"
+                            "title": "Calculator",
+                            "description": "What is (3 + 5) * 8?"
                         },
                         {
-                            "title": "How to develop TeamsToolkit app?",
-                            "description": "How can I develop apps with Teams Toolkit?"
+                            "title": "Weather forecast",
+                            "description": "What is the weather tomorrow in New York, NY?"
+                        },
+                        {
+                            "title": "API Center connection",
+                            "description": "What are api versions of my apis in my API Center?"
                         }
                     ]
                 }
