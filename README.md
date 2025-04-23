@@ -29,6 +29,7 @@ It showcases how to build an AI agent in Teams capable of chatting with users us
     }
 ```
 1. Fill in your Azure AI Foundry project connection string in [env/.env.local.user](./env/.env.local.user) or [env/.env.testtool.user](./env/.env.testtool.user). It can be found in your [Azure AI Foundry project overview page](https://ai.azure.com/).
+1. In [openApi/repairOpenApi.json](./src/openApi/repairOpenApi.json), input your repair OpenApi json content.
 
 ### Conversation with bot
 1. Select the Teams Toolkit icon on the left in the VS Code toolbar.
