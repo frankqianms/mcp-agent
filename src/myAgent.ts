@@ -1,43 +1,47 @@
-// filepath: c:\Users\frankqian\TeamsApps\mcp-agent\src\myAgent.ts
+// filepath: c:\Users\frankqian\TeamsApps\mcpAzAI\src\myAgent.ts
 import { ActivityTypes, ApplicationBuilder, MessageFactory } from '@microsoft/agents-hosting'
 import { HumanMessage } from '@langchain/core/messages'
 import { sysMessage, initializeMcpAgent } from './utils/index.js'
+import { initializeAzureAgent } from './utils/initializeAzureAgent.js'
 
 export const mcpAgent = new ApplicationBuilder().build()
 
 // Initialize agent
 let mcpClient;
 let reactAgent;
+let azureAgent;
 
-// Initialize and setup the agent
 try {
-  // Use the utility function to initialize the agent
+  // Initialize both MCP and Azure agents
   const initResult = await initializeMcpAgent();
   mcpClient = initResult.client;
   reactAgent = initResult.reactAgent;
-  
-  // Register the activity handler
+  azureAgent = await initializeAzureAgent();
+
   mcpAgent.activity(ActivityTypes.Message, async (context, state) => {
     try {
-      const llmResponse = await reactAgent.invoke({
-        messages: [
-          sysMessage,
-          new HumanMessage(context.activity.text!)
-        ]
-      }, {
-        configurable: { thread_id: context.activity.conversation!.id }
-      });
-
-      const llmResponseContent = JSON.parse(llmResponse.messages[llmResponse.messages.length - 1].content as string);
-
-      if (llmResponseContent.contentType === 'Text') {
-        await context.sendActivity(llmResponseContent.content);
-      } else if (llmResponseContent.contentType === 'AdaptiveCard') {
-        const response = MessageFactory.attachment({
-          contentType: 'application/vnd.microsoft.card.adaptive',
-          content: llmResponseContent.content
+      const userText = context.activity.text!;
+      let responseText;
+      // Simple routing: if message contains 'repair', use Azure agent, else MCP
+      if (/repair/i.test(userText)) {
+        responseText = await azureAgent.runUserMessage(userText);
+        await context.sendActivity(responseText);
+      } else {
+        const llmResponse = await reactAgent.invoke({
+          messages: [sysMessage, new HumanMessage(userText)]
+        }, {
+          configurable: { thread_id: context.activity.conversation!.id }
         });
-        await context.sendActivity(response);
+        const llmResponseContent = JSON.parse(llmResponse.messages[llmResponse.messages.length - 1].content as string);
+        if (llmResponseContent.contentType === 'Text') {
+          await context.sendActivity(llmResponseContent.content);
+        } else if (llmResponseContent.contentType === 'AdaptiveCard') {
+          const response = MessageFactory.attachment({
+            contentType: 'application/vnd.microsoft.card.adaptive',
+            content: llmResponseContent.content
+          });
+          await context.sendActivity(response);
+        }
       }
     } catch (error) {
       console.error("Error in activity handler:", error);

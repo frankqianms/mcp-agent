@@ -14,12 +14,12 @@
         "outline": "outline.png"
     },
     "name": {
-        "short": "mcp-agent-${{APP_NAME_SUFFIX}}",
-        "full": "full name for mcp-agent"
+        "short": "mcpAzAI-${{APP_NAME_SUFFIX}}",
+        "full": "full name for mcpAzAI"
     },
     "description": {
-        "short": "short description for mcp-agent",
-        "full": "full description for mcp-agent"
+        "short": "short description for mcpAzAI",
+        "full": "full description for mcpAzAI"
     },
     "accentColor": "#FFFFFF",
     "copilotAgents": {
