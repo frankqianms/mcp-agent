@@ -14,7 +14,7 @@ It showcases how to build an AI agent in Teams capable of chatting with users us
 > - A [Microsoft 365 account for development](https://docs.microsoft.com/microsoftteams/platform/toolkit/accounts).
 
 ### Configurations
-1. In file *env/.env.local.user*, fill in your Azure OpenAI key `SECRET_AZURE_OPENAI_API_KEY`, deployment name `AZURE_OPENAI_MODEL_DEPLOYMENT_NAME` and endpoint `AZURE_OPENAI_ENDPOINT`.
+1. In file [env/.env.local.user](./env/.env.local.user), fill in your Azure OpenAI key `SECRET_AZURE_OPENAI_API_KEY`, deployment name `AZURE_OPENAI_MODEL_DEPLOYMENT_NAME` and endpoint `AZURE_OPENAI_ENDPOINT`.
 1. In file [./src/mcpServers/mcpServersList.json](./src/mcpServers/mcpServersList.json), configure your MCP servers properly.
 1. You can reference this [doc](https://loop.cloud.microsoft/p/eyJ1IjoiaHR0cHM6Ly9taWNyb3NvZnQuc2hhcmVwb2ludC5jb20vc2l0ZXMvMWUwM2YyOWEtMDk1Ni00Zjc2LTlkM2EtNTU5ZTIzNWFkZDE5P25hdj1jejBsTWtaemFYUmxjeVV5UmpGbE1ETm1NamxoTFRBNU5UWXROR1kzTmkwNVpETmhMVFUxT1dVeU16VmhaR1F4T1Naa1BXSWxNakZGTlRsNE1qWnpSbG93UTB3Mk4ybEliRko1UnpCM1dFZHVSa1JaZFU1NFNtdHRRMVZVWnkxSGRITk1RVTA0WmtRNGFESjJVM0p3U0d4V1QybEhRVFEzSm1ZOU1ERTBURkZRUkZaRE1rdEhTazVDUjBOSVJVWkhXVlEwU3pKUVZrODJURVpCVmlaalBTVXlSaVpoUFV4dmIzQkJjSEFtY0QwbE5EQm1iSFZwWkhnbE1rWnNiMjl3TFhCaFoyVXRZMjl1ZEdGcGJtVnlKbmc5SlRkQ0pUSXlkeVV5TWlVelFTVXlNbFF3VWxSVlNIaDBZVmRPZVdJelRuWmFibEYxWXpKb2FHTnRWbmRpTW14MVpFTTFhbUl5TVRoWmFVWkdUbFJzTkUxcVducFNiRzkzVVRCM01rNHliRWxpUmtvMVVucENNMWRGWkhWU2ExSmFaRlUxTkZOdGRIUlJNVlpWV25reFNHUklUazFSVlRBMFdtdFJOR0ZFU2pKVk0wcDNVMGQ0VjFReWJFaFJWRkV6WmtSQmVFNUZlRkpWUlZKWFUwVmtVVk5FU1hsVk1FMTVWbFJrVTFKNlRYbFJiR2hVVjBWa1dsSkZlR0ZVTUUwbE0wUWxNaklsTWtNbE1qSnBKVEl5SlROQkpUSXlaakEwWWpFeVpUTXRaRFkyT0MwME56QmtMVGhtWkdNdE1UZGlZakEzTURNNFlqRTFKVEl5SlRkRSJ9?ct=1744868463887&&LOF=1) to configure your API Center MCP server. If you can not do that, delete the relative part in [./src/mcpServers/mcpServersList.json](./src/mcpServers/mcpServersList.json).
 ```
@@ -28,6 +28,7 @@ It showcases how to build an AI agent in Teams capable of chatting with users us
         }
     }
 ```
+1. Fill in your Azure AI Foundry project connection string in [env/.env.local.user](./env/.env.local.user) or [env/.env.testtool.user](./env/.env.testtool.user). It can be found in your [Azure AI Foundry project overview page](https://ai.azure.com/).
 
 ### Conversation with bot
 1. Select the Teams Toolkit icon on the left in the VS Code toolbar.
