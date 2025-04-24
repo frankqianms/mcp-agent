@@ -35,6 +35,39 @@ It showcases how to build an AI agent in Teams capable of chatting with users us
 1. Select the Teams Toolkit icon on the left in the VS Code toolbar.
 1. In the Account section, sign in with your [Microsoft 365 account](https://docs.microsoft.com/microsoftteams/platform/toolkit/accounts) if you haven't already.
 1. Press F5 to start debugging which launches your app in Teams using a web browser. Select `Debug in Teams (Edge)` or `Debug in Teams (Chrome)`.
+1. You'll see this log information in console if the app starts successfully.
+    ```
+    Tools loaded
+
+    name: mcp__math__add
+    description: 
+
+    name: mcp__math__multiply
+    description: 
+
+    name: mcp__weather__get-alerts
+    description: Get weather alerts for a US state
+
+    name: mcp__weather__get-forecast
+    description: Get weather forecast for a location in the US
+
+    name: mcp__apic-api__list_apis
+    description: List a collection of APIs from Azure API Center.
+
+    name: mcp__apic-api__list_api_versions
+    description: List a collection of API versions from Azure API Center.
+
+    name: mcp__apic-api__list_api_definitions
+    description: List a collection of API definitions from Azure API Center.
+
+    name: mcp__apic-api__export_api_definition
+    description: Export a specific API definition from Azure API Center.
+
+    name: azure_repair_tool
+    description: Use this tool for repair-related or OpenAPI-based queries. It will call the Azure agent to handle the request.
+
+    Agent initialized successfully with tools from MCP servers and Azure AI Foundry Agent
+    ```
 1. When Teams launches in the browser, select the Add button in the dialog to install your app to Teams.
 1. You will receive a welcome message from the bot, or send any message to get a response.
 
@@ -42,7 +75,7 @@ It showcases how to build an AI agent in Teams capable of chatting with users us
 
 > For local debugging using Teams Toolkit CLI, you need to do some extra steps described in [Set up your Teams Toolkit CLI for local debugging](https://aka.ms/teamsfx-cli-debugging).
 
-![ai agent](./src/conversation.png)
+![alt text](image-1.png)
 
 ## Known issue
 - If you use `Debug in Test Tool` to local debug, you might get an error `InternalServiceError: connect ECONNREFUSED 127.0.0.1:3978` in Test Tool console log or error message `Error: Cannot connect to your app,

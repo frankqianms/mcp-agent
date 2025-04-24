@@ -7,25 +7,22 @@ import { loadMcpServers } from './loadMcpServers.js';
  * Initialize the MCP client and agent
  * @returns Object containing the MCP client and React agent
  */
-export async function initializeMcpAgent(): Promise<{
+export async function initializeMcpAgent(extraTools: any[] = []): Promise<{
   client: MultiServerMCPClient;
   reactAgent: any;
-}> {  
+}> {
   try {
-    // Load the MCP servers configuration from the separate module
     const mcpServers = await loadMcpServers();
-    
-    // Create client and connect to server
     const client = new MultiServerMCPClient({
       throwOnLoadError: true,
       prefixToolNameWithServerName: true,
       additionalToolNamePrefix: "mcp",
-      // Server configuration loaded from JSON
       mcpServers,
-    });  
-    
-    // Get available tools from the MCP client
+    });
     const tools = await client.getTools();
+    if (extraTools.length > 0) {
+      tools.push(...extraTools);
+    }
     console.log(`Tools loaded\n`)
     for (const tool of tools) {
       console.log(`name: ${tool.name}\ndescription: ${tool.description}\n`);
@@ -37,7 +34,7 @@ export async function initializeMcpAgent(): Promise<{
       tools: tools,
     });
 
-    console.log("MCP agent initialized successfully with tools");
+    console.log("Agent initialized successfully with tools from MCP servers and Azure AI Foundry Agent");
 
     return { client, reactAgent };
   } catch (e) {
